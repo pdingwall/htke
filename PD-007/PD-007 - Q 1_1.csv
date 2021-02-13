@@ -1,0 +1,17 @@
+Data file:,C:\CDSProjects\Dingwall_group\Results\PD - TEMPO\PD-007\PD-007 - Q 1.sirslt\PD-007 - Q 1.dx
+Sample name:,PD-007 - Q 1
+Description:,
+Sample amount:,0.000,Sample type:,Sample
+Instrument:,1100LC,Location:,3
+Injection date:,2019-08-26 09:39:57+01:00,Injection:,1 of 1
+Acq. method:,PD - TEMPO Gradient.amx,Injection volume:,2.000
+Analysis method:,*GC_LC Area Percent_DefaultMethod.pmx,Acq. operator:,SYSTEM
+Last changed:,2019-06-19 10:57:01+01:00
+Signal:,"VWD1A,Wavelength=210 nm"
+RT [min],Type,Width [min],Area,Height,Area%,Name
+1.519,BV  ,1.4322,55390.1695,2745.5606,96.8723,
+2.490,VB  ,1.7424,239.5293,6.5397,0.4189,
+5.006,BB  ,0.9027,1278.9547,77.5978,2.2368,
+7.042,BB  ,0.4572,269.8623,28.5968,0.4720,
+,,Sum,57178.5158,,,
+
