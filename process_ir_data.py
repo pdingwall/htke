@@ -141,7 +141,7 @@ class Peaks():
 		return processed_ir_data
 	
 	
-	def exp_area(self, peak_threshold, residence_time, peak_of_interest):
+	def exp_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0.7, time_adjust_after = 0.7):
 		
 		"""Find the areas of the peaks in the experimental data
 		
@@ -150,6 +150,8 @@ class Peaks():
 		peak_threshold : Peak threshold
 		residence_time: Residence time of a single peak
 		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
 		
 		Returns
 		-------
@@ -173,8 +175,8 @@ class Peaks():
 		for var in list_of_peaks:
 	
 			# Find a single peak
-			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2-0.7)) 
-										 & (self.ir_data['Relative Time'] <= var + (residence_time/2+0.7))]
+			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
+										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			   
 			# Find peak area of the experimental data
 			exp_peak_area = np.trapz(single_peak[peak_of_interest])
@@ -195,7 +197,7 @@ class Peaks():
 		return a*np.exp(-np.power(x - b, 2)/(2*np.power(c, 2)))
 
 
-	def fitted_area(self, peak_threshold, residence_time, peak_of_interest, p0 = [5, -1.5, 2]):
+	def fitted_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0.7, time_adjust_after = 0.7, p0 = [5, -1.5, 2]):
 		
 		"""Find the areas of the fitted idealised Gaussian peaks
 		
@@ -204,6 +206,8 @@ class Peaks():
 		peak_threshold : Peak threshold
 		residence_time: Residence time of a single peak
 		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
 		
 		Returns
 		-------
@@ -227,8 +231,8 @@ class Peaks():
 		for var in list_of_peaks:
 	
 			# Find a single peak
-			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2-0.7)) 
-										 & (self.ir_data['Relative Time'] <= var + (residence_time/2+0.7))]
+			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
+										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			   
 			# Fit Gaussian and find parameters
 			X = np.arange(0, len(single_peak))
@@ -249,7 +253,7 @@ class Peaks():
 		return processed_ir_data
 
 
-	def fitted_area_sp(self, peak_threshold, residence_time, peak_of_interest, picked_peak = 0, p0 = [5, -1.5, 2]):
+	def fitted_area_sp(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0.7, time_adjust_after = 0.7, picked_peak = 0, p0 = [5, -1.5, 2]):
 		
 		"""Examine a single peak and fit a Gaussian curve 
 		
@@ -258,6 +262,8 @@ class Peaks():
 		peak_threshold : Peak threshold
 		residence_time: Residence time of a single peak
 		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
 		picked_peak: index of peak to examine
 		p0: Initial guesses for gaussian function, if blank is [5, -1.5, 2]
 		
@@ -279,8 +285,8 @@ class Peaks():
 		list_of_peaks = list(peak_pos)
 			
 		# Find a single peak - Adjusted slightly to account for tailing
-		single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= list_of_peaks[picked_peak] - (residence_time/2-0.7)) 
-									 & (self.ir_data['Relative Time'] <= list_of_peaks[picked_peak] + (residence_time/2+0.7))]
+		single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= list_of_peaks[picked_peak] - (residence_time/2 - time_adjust_before)) 
+									 & (self.ir_data['Relative Time'] <= list_of_peaks[picked_peak] + (residence_time/2 + time_adjust_after))]
 
 		# Fit Gaussian 
 		X = np.arange(0, len(single_peak))
@@ -294,9 +300,84 @@ class Peaks():
 		plt.ylabel("Peak Area")
 		plt.show()		
 	
-	#def compare(self, peak_threshold, residence_time, peak_of_interest, p0 = [5, -1.5, 2]):
 	
+	def compare(self, peak_height, peak_threshold, residence_time, peak_of_interest, no_reactions, points_per_reaction, time_adjust_before = 0.7, time_adjust_after = 0.7, p0 = [5, -1.5, 2]):
 		
+		"""
+		Compare prominence, height, experimental area, and fitted area
+		
+		Parameter
+		---------
+		peak_height: peak height threshold
+		peak_threshold: peak prominence threshold
+		residence_time: Residence time of a singel peak
+		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
+		no_reaction: Number of reactions performed
+		points_per_reaction: Number of SPKA peaks in reaction (including t0)
+		p0: Initial guesses for gaussian function, if blank is [5, -1.5, 2]
+
+		Retturns
+		--------
+		Plot of all normalised peak properties with best fit lines
+		Dataframe of r2 values for best fit lines
+		"""
+	
+		# Run each function. Use the relative time 
+		prominence = Peaks.prominence(self, peak_threshold,peak_of_interest)
+		height = Peaks.height(self, peak_height,peak_of_interest).iloc[:,1]
+		exp_area = Peaks.exp_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before, time_adjust_after).iloc[:,1]
+		fitted_area = Peaks.fitted_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before, time_adjust_after).iloc[:,1]
+		tmp = [prominence,height,exp_area,fitted_area]
+		compare = pd.concat(tmp, axis=1)
+		
+		# Normalise the data against the largest value in each column
+		df =[]
+		for var in range(1,len(compare.columns)):
+			tmp = compare.iloc[:,var]/max(compare.iloc[:,var])
+			df.append(tmp)
+		normalised = pd.concat(df, axis=1)
+
+		# Calculate the r2 for each reaction (not including the t0 peak)
+		df3 = []
+		# For loop along each reaction
+		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
+			df = []
+			
+			# For loop along along each peak property
+			for var2 in range(0,len(normalised.columns)):
+				r2 = np.corrcoef(compare.iloc[1+var:10+var,0],normalised.iloc[1+var:10+var,var2])[0,1]
+				df.append(r2)
+				df2 = pd.DataFrame(df)
+			df3.append(df2)
+
+		# Must transpose df to be the same orientation as previous dfs
+		final = pd.concat(df3, axis=1).T.reset_index(drop=True)
+		final.columns = list(normalised.columns)
+		final.loc['Sum'] = final.sum()
+		final
+		
+		# Plot all picked peaks
+		fig = plt.figure(figsize=(20,6))
+		for var in range(0,4):
+			plt.scatter(compare['Relative Time'], normalised.iloc[:,var], label = normalised.columns[var])
+			plt.legend()
+		
+		# Keep the line colours the same as the points
+		line_colours = ('b','orange','g','r')
+
+		# Create best fit line through each experiment (minus t0)
+		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
+			a, b = np.polyfit(compare.iloc[1+var:10+var,0],normalised.iloc[1+var:10+var,:], 1)
+			
+			# Plot lines
+			for var2 in range(0, no_reactions):
+				plt.plot(compare.iloc[1+var:10+var,0], a[var2] * compare.iloc[1+var:10+var,0] + b[var2], color=line_colours[var2])			
+
+		return final				
+	
+
 	def plot(self,processed_ir_data, peak_of_interest):
 	
 		"""Plot a single picked peaks against the raw data"""
