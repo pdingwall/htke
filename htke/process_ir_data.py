@@ -102,11 +102,14 @@ class Peaks():
 
 		# Add to dataframe
 		tmp = pd.DataFrame(peak_pos).reset_index(drop=True)
-		tmp2 = pd.DataFrame(peak_prominence)#.rename(columns = {'prominences':peak_of_interest})
+		tmp2 = pd.DataFrame(peak_prominence).rename(columns = {'prominences':'Peak Property'})
 		processed_ir_data = pd.concat([tmp,tmp2],axis=1)
 		
 		# Drop the 'base' columns
 		processed_ir_data.drop([col for col in processed_ir_data.columns if 'base' in col], axis=1, inplace=True)
+		
+		# Add the method
+		processed_ir_data['Method'] = 'prominence'
 
 		return processed_ir_data
 		
@@ -135,9 +138,12 @@ class Peaks():
 
 		# Add to dataframe
 		tmp = pd.DataFrame(peak_pos).reset_index(drop=True)
-		tmp2 = pd.DataFrame(peak_height)#.rename(columns = {'heights':peak_of_interest})
+		tmp2 = pd.DataFrame(peak_height).rename(columns = {'peak_heights':'Peak Property'})
 		processed_ir_data = pd.concat([tmp,tmp2],axis=1)
 
+		# Add the method
+		processed_ir_data['Method'] = 'height'
+		
 		return processed_ir_data
 	
 	
@@ -177,7 +183,10 @@ class Peaks():
 			# Find a single peak
 			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
-			   
+			
+			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
+			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
+			
 			# Find peak area of the experimental data
 			exp_peak_area = np.trapz(single_peak[peak_of_interest])
 			
@@ -187,8 +196,11 @@ class Peaks():
 			
 		# Finalise dataframe
 		tmp = pd.DataFrame(peak_pos).reset_index(drop=True)
-		tmp2 = pd.DataFrame(experimental_area, columns=['Experimental Area']).reset_index(drop=True)
+		tmp2 = pd.DataFrame(experimental_area, columns=['Peak Property']).reset_index(drop=True)
 		processed_ir_data = pd.concat([tmp,tmp2],axis=1)
+		
+		# Add the method
+		processed_ir_data['Method'] = 'experimental area'
 		
 		return processed_ir_data
 
@@ -234,6 +246,9 @@ class Peaks():
 			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			   
+			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
+			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
+			
 			# Fit Gaussian and find parameters
 			X = np.arange(0, len(single_peak))
 			pars, cov = curve_fit(f=self.gaussian, xdata=X, ydata=single_peak[peak_of_interest], p0=[5, -1, 2], bounds=(-np.inf, np.inf))
@@ -247,8 +262,11 @@ class Peaks():
 			
 		# Finalise dataframe
 		tmp = pd.DataFrame(peak_pos).reset_index(drop=True)
-		tmp2 = pd.DataFrame(fitted_area, columns=['Fitted Area']).reset_index(drop=True)
+		tmp2 = pd.DataFrame(fitted_area, columns=['Peak Property']).reset_index(drop=True)
 		processed_ir_data = pd.concat([tmp,tmp2],axis=1)
+		
+		# Add the method
+		processed_ir_data['Method'] = 'fitted area'
 		
 		return processed_ir_data
 
@@ -288,6 +306,9 @@ class Peaks():
 		single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= list_of_peaks[picked_peak] - (residence_time/2 - time_adjust_before)) 
 									 & (self.ir_data['Relative Time'] <= list_of_peaks[picked_peak] + (residence_time/2 + time_adjust_after))]
 
+		# Baseline correction - Make the first point 0 - MAKES THINGS WORSE!
+		#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
+
 		# Fit Gaussian 
 		X = np.arange(0, len(single_peak))
 		pars, cov = curve_fit(f=self.gaussian, xdata=X, ydata=single_peak[peak_of_interest], p0 = p0, bounds=(-np.inf, np.inf))
@@ -321,7 +342,8 @@ class Peaks():
 		Retturns
 		--------
 		Plot of all normalised peak properties with best fit lines
-		Dataframe of r2 values for best fit lines
+		final: Dataframe of r2 values for best fit lines
+		compare: Dataframe containing he peak properties for prominence, height, experimental area, and fitted area
 		"""
 	
 		# Run each function. Use the relative time 
@@ -332,6 +354,13 @@ class Peaks():
 		tmp = [prominence,height,exp_area,fitted_area]
 		compare = pd.concat(tmp, axis=1)
 		
+		# Drop method columns
+		compare.drop([col for col in compare.columns if 'Method' in col], axis=1, inplace=True)
+		
+		# Rename columnswith their methods, define manually
+		col_headings = ('Relative Time', 'Prominence', 'Height', 'Experimental Area', 'Fitted Area')
+		compare.columns = col_headings
+		
 		# Normalise the data against the largest value in each column
 		df =[]
 		for var in range(1,len(compare.columns)):
@@ -339,15 +368,15 @@ class Peaks():
 			df.append(tmp)
 		normalised = pd.concat(df, axis=1)
 
-		# Calculate the r2 for each reaction (not including the t0 peak)
-		df3 = []
+		# Calculate the r2 for each reaction (not including the t0 peak)		
 		# For loop along each reaction
+		df3 = []
 		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
 			df = []
 			
 			# For loop along along each peak property
 			for var2 in range(0,len(normalised.columns)):
-				r2 = np.corrcoef(compare.iloc[1+var:10+var,0],normalised.iloc[1+var:10+var,var2])[0,1]
+				r2 = np.corrcoef(compare.iloc[1 + var : 10 + var, 0],normalised.iloc[1 + var : 10 + var, var2])[0,1]
 				df.append(r2)
 				df2 = pd.DataFrame(df)
 			df3.append(df2)
@@ -375,7 +404,7 @@ class Peaks():
 			for var2 in range(0, no_reactions):
 				plt.plot(compare.iloc[1+var:10+var,0], a[var2] * compare.iloc[1+var:10+var,0] + b[var2], color=line_colours[var2])			
 
-		return final				
+		return final, compare
 	
 
 	def plot(self,processed_ir_data, peak_of_interest):
