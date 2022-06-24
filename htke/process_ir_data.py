@@ -185,7 +185,7 @@ class Peaks():
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			
 			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
-			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
+			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - min(single_peak[peak_of_interest])
 			
 			# Find peak area of the experimental data
 			exp_peak_area = np.trapz(single_peak[peak_of_interest])
@@ -247,7 +247,7 @@ class Peaks():
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			   
 			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
-			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
+			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - min(single_peak[peak_of_interest])
 			
 			# Fit Gaussian and find parameters
 			X = np.arange(0, len(single_peak))
@@ -333,10 +333,10 @@ class Peaks():
 		peak_threshold: peak prominence threshold
 		residence_time: Residence time of a singel peak
 		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
-		time_adjust_before: Time to remove from front of peak
-		time_adjust_after: Time to add after peak
 		no_reaction: Number of reactions performed
 		points_per_reaction: Number of SPKA peaks in reaction (including t0)
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
 		p0: Initial guesses for gaussian function, if blank is [5, -1.5, 2]
 
 		Retturns
