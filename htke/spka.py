@@ -119,7 +119,7 @@ class SPKA():
 		
 		"""
 		# Define the peak_properties to compare
-		peak_properties = ['Prominence', 'Height', 'Experimental Area', 'Fitted Area']
+		peak_properties = ['Prominence', 'Experimental Area', 'Fitted Area']
 		
 		# Stop that damn slice error
 		pd.options.mode.chained_assignment = None  # default='warn'

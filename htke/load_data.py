@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import glob
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
 
 class Data:
     
@@ -44,3 +46,28 @@ class Data:
         fig = ir_data.plot(x='Relative Time',figsize=(20,6))
                 
         return fig
+		
+		
+    def baseline_correction(data, peak_of_interest, lam = 200, p = 0.01, niter = 10):
+        
+        """
+        data: supply ir_data[peak_of_interest]
+		peak_of_interest: peak of interest
+		lam: Affects resolution, lower is more detailed, higher is more general 
+		p: Affects resolution, higher is more detailed
+		niter: Affects depth, higher takes baseline into the peak (keep at 10 or below)
+        From: https://stackoverflow.com/questions/57350711/baseline-correction-for-spectroscopic-data
+        """
+
+        #this is the code for the fitting procedure        
+        L = len(data)
+        w = np.ones(L)
+        D = sparse.diags([1,-2,1], [0,-1,-2], shape=(L,L-2))
+
+        for jj in range(int(niter)):
+            W = sparse.spdiags(w, 0, L, L)
+            Z = W + lam * D.dot(D.transpose())
+            z = spsolve(Z, w*data.astype(np.float64))
+            w = p * (data > z) + (1-p) * (data < z)
+
+        return pd.Series(z)

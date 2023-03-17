@@ -45,6 +45,68 @@ class Conditions():
 			# For single reaction
 			tmp = conditions.loc[conditions['Experiment'] == var]
 			
+			# Experiments will always start at 0% conversion
+			spka_start = [0]
+			
+			# Create and append df for each SPKA datapoint
+			# The next point will start at the specified 'Initial Conversion' and go up by 'Interval Size' * number of SPKA points - 2 (-1 for t0 and -1  as must be one less than in excel)
+			spka_points = [tmp['Initial Conv'].iloc[0] + tmp['Interval Size'].iloc[0] * x for x in range(0, tmp['SPKA'].iloc[0] - 2)]
+			
+			# Make sure it starts at spka_start
+			spka = pd.DataFrame(spka_start + spka_points, columns = ['SPKA'])
+			
+			# Add this to the dataframe
+			tmp = tmp.drop(['SPKA'],axis=1) # drop manually filled column
+			tmp = tmp.append(spka, ignore_index=True).ffill()
+			
+			# Take first row as t0 conditions and duplicate
+			t0_cond = pd.DataFrame(tmp.iloc[0,:]).T
+			pd.concat([t0_cond,tmp]).reset_index()
+			
+			data.append(tmp)
+
+		processed_conditions=pd.concat(data).reset_index(drop=True).fillna(value='0')
+
+		# Check that you have the same number of peaks as experimental conditions
+		if len(processed_ir_data) != len(processed_conditions):
+			print('You have a problem: IR datapoints = ',len(processed_ir_data),', Number of conditions = ',len(processed_conditions))
+		else:
+			print('Inputs seem good: IR Datapoints = ',len(processed_ir_data),', Number of conditions = ',len(processed_conditions))
+
+		# Merge IR and Conditions dataframes
+		experimental_data = pd.concat([processed_conditions,processed_ir_data],axis=1)
+
+		return experimental_data
+		
+		
+	def read_no_init_cond(processed_ir_data):
+	
+		"""Reads and processes "Conditions.xlsx"
+		
+		NOTE: Does not require an 'Initial Conditions' column in Conditions.xlsx, to be used with old data. The SPKA intervals start from 0 and go up in the stated intervals.
+		
+		Parameter
+		---------
+		processed_ir_data: Dataframe output by Peaks()
+		
+		Return
+		------
+		exerimental_data: Dataframe containing exmperimental data sepcificed in "Conditions.xlsx" and processed_ir_data
+		Will also check that numbr of IR datapoints matches the number of specified conditions.
+		"""
+	
+		# Read excel sheet
+		conditions = pd.read_excel("Conditions.xlsx")  
+
+		# Expand SPKA conditions for each reaction
+		experiments = conditions['Experiment'].unique()
+
+		data=[]
+		for var in experiments:
+			   
+			# For single reaction
+			tmp = conditions.loc[conditions['Experiment'] == var]
+			
 			# Find interval size
 			interval_size = tmp['Interval Size'].iloc[0]
 			
@@ -70,7 +132,4 @@ class Conditions():
 		# Merge IR and Conditions dataframes
 		experimental_data = pd.concat([processed_conditions,processed_ir_data],axis=1)
 
-		return experimental_data
-		
-		
-		
+		return experimental_data		

@@ -32,18 +32,12 @@ class RPKA():
 		
 		self.rpka_data = rpka_data
 
-	# For diff_excess - first experiment
-	#def func_exp1(self, x):
-		#return self.rate_exp_a/(self.yconc_exp_a**x) - self.x_exp_a
-
-	# For diff_excess - second experiment
-	#def func_exp2(self, x):
-		#return self.rate_exp_b/(self.yconc_exp_b**x) - self.x_exp_b
 
 	# Residuals for RPKA
 	def residuals(self, x):
 		return ((self.rate_exp_a/(self.yconc_exp_a**x)) - (self.rate_exp_b/(self.yconc_exp_b**x)))
 
+	# Residuals for RPKA
 	def sum_residuals(self, x):
 		return sum(self.residuals(x)**2)
 

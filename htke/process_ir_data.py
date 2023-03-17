@@ -67,10 +67,16 @@ class Peaks():
 		
 		self.peak_of_interest = peak_of_interest
 		
+		# Read "Conditions.xlsx"
+		quick_cond = pd.read_excel("Conditions.xlsx")
+
+		# Calculate the number of reactions this specifies
+		no_reactions = len(quick_cond['Experiment'])
+		
 		# Golden > Bounded > Brent ??? Could also look into tolerance
 		mins = minimize_scalar(self.prominence_finder, method='Golden', bounds=(lower_bound, upper_bound))
 		
-		return mins.x
+		return mins.x, no_reactions
 
 
 	def height_finder(self, var):
@@ -266,9 +272,6 @@ class Peaks():
 			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			
-			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
-			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - min(single_peak[peak_of_interest])
-			
 			# Find peak area of the experimental data
 			exp_peak_area = np.trapz(single_peak[peak_of_interest])
 			
@@ -328,9 +331,6 @@ class Peaks():
 			single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= var - (residence_time/2 - time_adjust_before)) 
 										 & (self.ir_data['Relative Time'] <= var + (residence_time/2 + time_adjust_after))]
 			   
-			# Baseline correction - Make the first point 0 - MAKES THINGS WORSE
-			#single_peak[peak_of_interest] = single_peak[peak_of_interest] - min(single_peak[peak_of_interest])
-			
 			# Fit Gaussian and find parameters
 			X = np.arange(0, len(single_peak))
 			pars, cov = curve_fit(f=self.gaussian, xdata=X, ydata=single_peak[peak_of_interest], p0=[5, -1, 2], bounds=(-np.inf, np.inf))
@@ -369,7 +369,7 @@ class Peaks():
 		
 		Returns
 		-------
-		experimental_area	
+		Plot of fitted area	for a single peak
 		"""
 		
 		# Requires prominence data (don't use prominence function as don't want returned processed_ir_data)
@@ -388,9 +388,6 @@ class Peaks():
 		single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= list_of_peaks[picked_peak] - (residence_time/2 - time_adjust_before)) 
 									 & (self.ir_data['Relative Time'] <= list_of_peaks[picked_peak] + (residence_time/2 + time_adjust_after))]
 
-		# Baseline correction - Make the first point 0 - MAKES THINGS WORSE!
-		#single_peak[peak_of_interest] = single_peak[peak_of_interest] - single_peak[peak_of_interest].iloc[0]
-
 		# Fit Gaussian 
 		X = np.arange(0, len(single_peak))
 		pars, cov = curve_fit(f=self.gaussian, xdata=X, ydata=single_peak[peak_of_interest], p0 = p0, bounds=(-np.inf, np.inf))
@@ -399,9 +396,67 @@ class Peaks():
 		plt.scatter(X, single_peak[peak_of_interest], s=20, label='Data')
 		x = np.linspace(0, len(single_peak), 60)
 		plt.plot(x, self.gaussian(x, *pars), linestyle='--', linewidth=2, color='black')
+		plt.fill_between(x, self.gaussian(x, *pars), color='blue', alpha = 0.3) # fill the integrated area
 		plt.xlabel("Index (see above chart for corresponding time)")
 		plt.ylabel("Peak Area")
 		plt.show()		
+
+
+	def exp_area_sp(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0, time_adjust_after = 0, picked_peak = 0):
+
+		"""Examine a single peak and integrate it 
+		
+		Parameter
+		---------
+		peak_threshold : Peak threshold
+		residence_time: Residence time of a single peak
+		peak_of_interest: Single wavelength to integrate (ie 'Peak at 1704 cm-1')
+		time_adjust_before: Time to remove from front of peak
+		time_adjust_after: Time to add after peak
+		picked_peak: index of peak to examine
+		
+		Returns
+		-------
+		Plot of experimental area for a single peak	
+		"""
+		
+		x = self.ir_data[peak_of_interest]
+
+		# Find peak height and position
+		peaks = find_peaks(x, prominence = peak_threshold)
+		peak_prominence = peaks[1]
+		peak_pos = self.ir_data['Relative Time'][peaks[0]]
+
+		# Make it a list
+		list_of_peaks = list(peak_pos)
+
+		# Find a single peak
+		single_peak = self.ir_data.loc[(self.ir_data['Relative Time'] >= list_of_peaks[picked_peak] - (residence_time/2 - time_adjust_before)) 
+								& (self.ir_data['Relative Time'] <= list_of_peaks[picked_peak] + (residence_time/2 + time_adjust_after))]
+
+		# Find peak area of the experimental data
+		exp_peak_area = np.trapz(single_peak[peak_of_interest])
+
+		# Plot data
+		plt.scatter(single_peak['Relative Time'], single_peak[peak_of_interest], label='Data')
+
+		# Plot start and end points of integration
+		int_thresh_x = (single_peak['Relative Time'].iloc[0], single_peak['Relative Time'].iloc[-1])
+		int_thresh_y = (single_peak[peak_of_interest].iloc[0], single_peak[peak_of_interest].iloc[-1])
+
+		plt.scatter(int_thresh_x, int_thresh_y, marker = 'x', s=100, color = 'black')
+
+		# Plot Prominence point
+		plt.scatter(peak_pos.iloc[picked_peak], single_peak[single_peak['Relative Time'] == peak_pos.iloc[picked_peak]][peak_of_interest], color = 'red', s = 50)
+
+		# Fill integrated area
+		plt.fill_between(single_peak['Relative Time'], single_peak[peak_of_interest],    
+			#where = ((single_peak['Relative Time'] >= int_thresh_x[0]) & (single_peak['Relative Time'] <= int_thresh_x[1])),
+			color='blue', alpha = 0.3)
+
+		plt.xlabel("Time (min)")
+		plt.ylabel("Peak Area")
+		plt.show()
 
 
 	def area_finder(self, residence_time):
@@ -444,7 +499,6 @@ class Peaks():
 		
 		return mins.x
 
-		
 	
 	def compare(self, peak_height, peak_threshold, residence_time, peak_of_interest, no_reactions, points_per_reaction, time_adjust_before = 0, time_adjust_after = 0, p0 = [5, -1.5, 2]):
 		
@@ -614,7 +668,7 @@ class Peaks():
 		return final, compare
 		
 
-	def plot(self,processed_ir_data, peak_of_interest):
+	def plot(self, processed_ir_data, peak_of_interest):
 	
 		"""Plot a single picked peaks against the raw data"""
 		
@@ -630,3 +684,76 @@ class Peaks():
 		
 		#ax.plot(self.ir_data['Relative Time'], self.ir_data[peak_list[1]])
 		#ax.scatter(processed_ir_data[peak_list[0]],processed_ir_data[peak_list[1]], color='r')
+
+		
+	def t0_correction(self, processed_ir_data, no_reactions, points_per_reaction):
+		
+		"""Finds all t0 values and averages them
+		
+		Parameter
+		---------
+		processed_ir_data: dataframe containing raw data, output from peak picking and processing
+		no_reaction: number of reactions
+		points_per_reaction: points per reaction, including t0
+		
+		Returns
+		--------
+		processed_ir_data: Dataframe with original t0 data replaced
+		"""
+		
+		rxn = processed_ir_data[['Relative Time','Peak Property']]
+
+		# Find the average of the t0s
+		df =[]
+		for var in range(0,no_reactions):
+			# Find the t0 point
+			t0_list = rxn.iloc[var*points_per_reaction,1]
+			df.append(t0_list)
+			average_t0 = sum(df)/len(df)
+		
+		# Replace original t0s with the average
+		for var in range(0,no_reactions):
+			processed_ir_data.iloc[var*points_per_reaction,1] = average_t0
+			
+		return processed_ir_data
+
+		
+	def linear_correction(self, processed_ir_data, no_reactions, points_per_reaction):
+		
+		"""Fits the raw data to a straight line and returns data smoothed as this line
+		
+		Parameter
+		---------
+		processed_ir_data: dataframe containing raw data, output from peak picking and processing
+		no_reaction: number of reactions
+		points_per_reaction: points per reaction, including t0
+		
+		Returns
+		--------
+		processed_ir_data: Dataframe with 'Peak Property' reaplaced with smoothed line
+		"""
+		
+		rxn = processed_ir_data[['Relative Time','Peak Property']]
+
+		df = []
+		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
+			# Find linear fit
+			a,b = np.polyfit(rxn.iloc[1+var:points_per_reaction+var,0], rxn.iloc[1+var:points_per_reaction+var,:],1)
+			# Create the smoothed y data
+			best_fit_line = []
+			best_fit_line = a[1] * rxn.iloc[1+var:points_per_reaction+var,0] + b[1]
+			# Add the t0 in
+			best_fit_line = pd.concat([pd.Series(rxn.iloc[var,1]),best_fit_line])
+			# Append to list
+			df.append(best_fit_line)
+			
+		linearised_data = pd.concat(df).reset_index(drop=True)
+
+		# Save the raw data
+		processed_ir_data['Raw Peak Property'] = processed_ir_data['Peak Property']
+		# Overwrite raw data and add linear best fit to dataframe
+		processed_ir_data['Peak Property'] = linearised_data
+		
+		return processed_ir_data
+		
+		
