@@ -40,7 +40,7 @@ class Peaks():
 
 		# Calculate the number of reactions this specifies
 		no_reactions = len(quick_cond['Experiment']) * quick_cond['SPKA'].iloc[0]		
-		
+
 		# Find the prominence
 		x = self.ir_data[self.peak_of_interest]
 		peaks = find_peaks(x, prominence = var)
@@ -73,10 +73,13 @@ class Peaks():
 		# Calculate the number of reactions this specifies
 		no_reactions = len(quick_cond['Experiment'])
 		
+		# Find the number of points_per_reaction - should be the same for each reaction
+		points_per_reaction = quick_cond['SPKA'][0]	
+		
 		# Golden > Bounded > Brent ??? Could also look into tolerance
 		mins = minimize_scalar(self.prominence_finder, method='Golden', bounds=(lower_bound, upper_bound))
 		
-		return mins.x, no_reactions
+		return mins.x, no_reactions, points_per_reaction
 
 
 	def height_finder(self, var):
