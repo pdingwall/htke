@@ -737,13 +737,21 @@ class Peaks():
 
 		df = []
 		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
+			
+			# Must +2: the frist point is the t0, the second point is the initial reaction point which is likely at a different SPKA conversion to the following points
+			x = rxn.iloc[var + 2 : points_per_reaction + var, 0]
+			y = rxn.iloc[var + 2 : points_per_reaction + var, 1]
+			
 			# Find linear fit
-			a,b = np.polyfit(rxn.iloc[1+var:points_per_reaction+var,0], rxn.iloc[1+var:points_per_reaction+var,:],1)
+			a,b = np.polyfit(x, y, 1)
+			
 			# Create the smoothed y data
 			best_fit_line = []
-			best_fit_line = a[1] * rxn.iloc[1+var:points_per_reaction+var,0] + b[1]
-			# Add the t0 in
-			best_fit_line = pd.concat([pd.Series(rxn.iloc[var,1]),best_fit_line])
+			best_fit_line = a * x + b
+			
+			# Add the t0 and first point back in
+			best_fit_line = pd.concat([pd.Series(rxn.iloc[var : var + 2, 1]), best_fit_line])
+			
 			# Append to list
 			df.append(best_fit_line)
 			
@@ -751,6 +759,7 @@ class Peaks():
 
 		# Save the raw data
 		processed_ir_data['Raw Peak Property'] = processed_ir_data['Peak Property']
+		
 		# Overwrite raw data and add linear best fit to dataframe
 		processed_ir_data['Peak Property'] = linearised_data
 		
