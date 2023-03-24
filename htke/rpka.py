@@ -146,7 +146,7 @@ class RPKA():
 		return sum_residuals
 		
 		
-	def diff_excess(self, min_meth = 'BFGS', bnds =((-1,1),)):
+	def diff_excess(self, min_meth = 'BFGS', lower_bound = -1, upper_bound = 1):
     
 		"""
 		Perform a different excess analysis.
@@ -165,6 +165,9 @@ class RPKA():
 		-------
 		rpka_data: original dataframe with columnns for each reagent order
 		"""
+		
+		# Set the bounds for the minimiser
+		bnds = ((lower_bound, upper_bound),)		
 		
 		df_a = []
 		df_b = []
@@ -199,8 +202,8 @@ class RPKA():
 			# Determine order in A
 			order_in_A = minimize(self.straight_line_a, 1, method = min_meth, bounds=bnds).x
 
-			# Determing order in C
-			order_in_C = minimize(self.sum_residuals_c, 2, method = min_meth, bounds=bnds).x
+			# Determing order in C - lower bound set to 0.5 as catalyst unlikely to be less than this
+			order_in_C = minimize(self.sum_residuals_c, 1, method = min_meth, bounds=((0.5, upper_bound),)).x
 
 			# Create a series of each order of length tmp to append in loop
 			a = pd.Series(np.round(order_in_A, 2)).repeat(len(tmp))
@@ -285,9 +288,9 @@ class RPKA():
 			ax[var_row, 1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
 
 			# Set titles
-			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' : ' +
-									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]))
-			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]))
+			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (overlay) : ' +
+									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (linearity)')
+			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (overlay)')
 
 			# Set labels
 			ax[var_row, 0].set_ylabel('Rate/[B]b')
@@ -343,8 +346,8 @@ class RPKA():
 		ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
 
 		# Set titles
-		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' : ' + str(tmp['B'][0]) + ' ^ ' + str(b))
-		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c))
+		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' (overlay) : ' + str(tmp['B'][0]) + ' ^ ' + str(b) + ' linearity')
+		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c) + ' (overlay)')
 
 		# Set labels
 		ax[0].set_ylabel('Rate/[B]b')
