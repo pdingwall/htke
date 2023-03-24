@@ -76,8 +76,57 @@ class SPKA():
 		spka_data = pd.concat(data).reset_index(drop=True)
 
 		return spka_data
+	
+	
+	def spka_best_fit(self, spka_data):
+		"""
+		Data smoothin function. Fits a line through the raw SPKA data then returns that line for further analysis in RPKA.
 		
+		Parameters
+		----------
+		spka_data: spka_data dataframe output from spka function.
 		
+		Returns
+		-------
+		spka_data: dataframe where 'Rate' and '[A]' have been replaced with smoothed data, original data now in 'Raw Rate' and 'Raw [A]'.
+		"""
+	
+		df_old_rate = []
+		df_old_A = []
+		df_new_rate = []
+		df_new_A = []
+
+		for reaction in self.reaction_list:
+
+			tmp = spka_data.loc[spka_data['Experiment'] == reaction]
+
+			# Find best fit line of Rate vs [A]
+			a, b = np.polyfit(tmp['[A]'].astype(float), tmp['Rate'].astype(float), 1)
+
+			# Find max and min concentrations
+			max_A = tmp['[A]'].max()
+			min_A = tmp['[A]'].min()
+
+			# Build a ten point line between these points
+			best_fit_line_x = np.linspace(max_A, min_A, 4)
+
+			# Use a and b to find the corresponding y points
+			best_fit_line_y = a * best_fit_line_x + b
+
+			# Backup then replace the original data
+			df_old_rate.append(tmp['Rate'])
+			df_old_A.append(tmp['[A]'])
+			df_new_rate.append(pd.Series(best_fit_line_y))
+			df_new_A.append(pd.Series(best_fit_line_x))
+
+		spka_data['Raw Rate'] = pd.concat(df_old_rate, ignore_index = True)
+		spka_data['Raw [A]'] = pd.concat(df_old_A, ignore_index = True)
+		spka_data['Rate'] = pd.concat(df_new_rate, ignore_index = True)
+		spka_data['[A]'] = pd.concat(df_new_A, ignore_index = True)
+
+		return spka_data
+	
+			
 	def plot(self, spka_data):
 	
 		""" Plot spka_data
