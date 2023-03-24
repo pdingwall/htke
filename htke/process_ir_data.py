@@ -294,6 +294,10 @@ class Peaks():
 
 
 	def gaussian(self, x, a, b, c):
+		"""
+		For use internally, defines a gaussian function to fit to experimental data.
+		"""
+		
 		return a*np.exp(-np.power(x - b, 2)/(2*np.power(c, 2)))
 
 
@@ -662,11 +666,11 @@ class Peaks():
 
 		# Create best fit line through each experiment (minus t0)
 		for var in range(0, no_reactions * points_per_reaction, points_per_reaction):
-			a, b = np.polyfit(compare.iloc[1+var:10+var,0],normalised.iloc[1+var:10+var,:], 1)
+			a, b = np.polyfit(compare.iloc[1+var : 10+var, 0],normalised.iloc[1+var : 10+var, :], 1)
 			
 			# Plot lines
 			for var2 in range(0, 3): # Change 3 to number of methods examined
-				plt.plot(compare.iloc[1+var:10+var,0], a[var2] * compare.iloc[1+var:10+var,0] + b[var2], color=line_colours[var2])			
+				plt.plot(compare.iloc[1+var : 10+var,0], a[var2] * compare.iloc[1+var : 10+var,0] + b[var2], color=line_colours[var2])			
 
 		return final, compare
 		
@@ -708,15 +712,20 @@ class Peaks():
 
 		# Find the average of the t0s
 		df =[]
-		for var in range(0,no_reactions):
+		for var in range(0, no_reactions):
 			# Find the t0 point
-			t0_list = rxn.iloc[var*points_per_reaction,1]
+			t0_list = rxn.iloc[var * points_per_reaction, 1]
 			df.append(t0_list)
-			average_t0 = sum(df)/len(df)
+		
+		# Remove any outliers: based on one std dev away from mean
+		df_no_outliers = [x for x in df if (x > np.mean(df) - np.std(df))]
+		df_no_outliers = [x for x in df_no_outliers if (x < np.mean(df) + np.std(df))]
+				
+		average_t0 = np.mean(df_no_outliers)
 		
 		# Replace original t0s with the average
 		for var in range(0,no_reactions):
-			processed_ir_data.iloc[var*points_per_reaction,1] = average_t0
+			processed_ir_data.iloc[var * points_per_reaction, 1] = average_t0
 			
 		return processed_ir_data
 
