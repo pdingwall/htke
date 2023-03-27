@@ -7,7 +7,7 @@ from scipy.optimize import minimize
 
 class SPKA():
 
-	""" Create SPKA profiles
+	""" Create SPKA profiles.
 	"""
 	def __init__(self, experimental_data):
 		self.experimental_data = experimental_data
@@ -18,7 +18,7 @@ class SPKA():
 		
 	def spka(self, sm_monitored):
 	
-		""" Create SPKA profiles. Must pass only a single peak from Peaks().
+		"""Create SPKA profiles. Must pass only a single peak from Peaks().
 		
 		Parameter
 		---------
@@ -76,7 +76,8 @@ class SPKA():
 		spka_data = pd.concat(data).reset_index(drop=True)
 
 		return spka_data
-	
+		
+		
 	
 	def spka_best_fit(self, spka_data):
 		"""
@@ -108,7 +109,7 @@ class SPKA():
 			min_A = tmp['[A]'].min()
 
 			# Build a ten point line between these points
-			best_fit_line_x = np.linspace(max_A, min_A, 4)
+			best_fit_line_x = np.linspace(max_A, min_A, len(tmp))
 
 			# Use a and b to find the corresponding y points
 			best_fit_line_y = a * best_fit_line_x + b
