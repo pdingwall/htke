@@ -28,8 +28,14 @@ class RPKA():
                                    'SPKA Conversion',
                                    'SPKA Ideal t0 Concentration',
                                    'Normalised IR Concentration',
-                                   'Initial Conv',
-                                   'Raw Peak Property'])
+                                   'Initial Conv'])
+		
+		# If no experimental smoothing then will be no 'Raw Peak Property' column, this will skip error
+		try:
+			rpka_data = rpka_dat.drop(columns=['Raw Peak Property'])
+		except:
+			# Do nothing and move on
+			pass
 		
 		# Determine parameters needed for RPKA
 		rpka_data['[Excess]'] = rpka_data['[B]0'] - rpka_data['[A]0']
@@ -111,19 +117,18 @@ class RPKA():
 		
 		"""
 		Returns the summed r2 of two kinetic profiles to find the order in A (a. To be used by minimiser.
-		For now, discounts the first reaction point as it is often wonky.
 		"""
 		
 		# This might need to change
 		b = self.order_in_B
 		
 		# Find the r2 for the standard reaction
-		rxn_standard_r2 = np.corrcoef((self.standard_conc_A ** x).astype(float)[1:],
-									  (self.standard_rate / self.standard_conc_B ** b).astype(float)[1:], 1)[0,1]
+		rxn_standard_r2 = np.corrcoef((self.standard_conc_A ** x).astype(float),
+									  (self.standard_rate / self.standard_conc_B ** b).astype(float), 1)[0,1]
 
 		# Find the r2 for the change in B reaction
-		rxn_diff_B_r2 = np.corrcoef((self.diff_B_conc_A ** x).astype(float)[1:],
-									  (self.diff_B_rate / self.diff_B_conc_B ** b).astype(float)[1:], 1)[0,1]
+		rxn_diff_B_r2 = np.corrcoef((self.diff_B_conc_A ** x).astype(float),
+									  (self.diff_B_rate / self.diff_B_conc_B ** b).astype(float), 1)[0,1]
 		
 		r2_to_min = -(rxn_standard_r2 + rxn_diff_B_r2)
 		
@@ -146,7 +151,7 @@ class RPKA():
 		return sum_residuals
 		
 		
-	def diff_excess(self, min_meth = 'BFGS', lower_bound = -1, upper_bound = 1):
+	def diff_excess(self, min_meth = 'BFGS', lower_bound = -1, upper_bound = 1, initial_guess = 1):
     
 		"""
 		Perform a different excess analysis.
@@ -158,8 +163,10 @@ class RPKA():
 
 		Parameters
 		----------
-		method: Minimiser method: BFGS (default), CG, TNC, trust-constr
-		bnds: bounds for minimiser, default (-1,1)
+		method: Minimiser method: BFGS, CG, TNC, trust-constr
+		lower_bound: lower bound for minimiser
+		upper_bound: upper bound for minimiser
+		initial_guess: initial guess for minimiser
 		
 		Returns
 		-------
@@ -197,13 +204,13 @@ class RPKA():
 			self.diff_C_conc_C = tmp['[C]'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 
 			# Determine order in B. Must be first as order_in_B is required to find order in A
-			self.order_in_B = minimize(self.sum_residuals_b, 1, method = min_meth, bounds=bnds).x
+			self.order_in_B = minimize(self.sum_residuals_b, initial_guess, method = min_meth, bounds=bnds).x
 
 			# Determine order in A
-			order_in_A = minimize(self.straight_line_a, 1, method = min_meth, bounds=bnds).x
+			order_in_A = minimize(self.straight_line_a, initial_guess, method = min_meth, bounds=bnds).x
 
 			# Determing order in C - lower bound set to 0.5 as catalyst unlikely to be less than this
-			order_in_C = minimize(self.sum_residuals_c, 1, method = min_meth, bounds=((0.5, upper_bound),)).x
+			order_in_C = minimize(self.sum_residuals_c, initial_guess, method = min_meth, bounds=((0.5, upper_bound),)).x
 
 			# Create a series of each order of length tmp to append in loop
 			a = pd.Series(np.round(order_in_A, 2)).repeat(len(tmp))
