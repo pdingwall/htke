@@ -100,7 +100,7 @@ class RPKA():
 	def sum_residuals_b(self, x):
 		
 		"""
-		Returns the sum of the residauls to find the order in B (b). To be used by minimiser.
+		Returns the sum of the residauls to find the order in B (b), Rate/[B]b must be on y-axis. To be used by minimiser.
 		"""
 
 		# Residuals for finding b (order in B), y-axis is Rate/[B]b
@@ -116,7 +116,7 @@ class RPKA():
 	def straight_line_a(self, x):
 		
 		"""
-		Returns the summed r2 of two kinetic profiles to find the order in A (a. To be used by minimiser.
+		Returns the summed r2 of two kinetic profiles to find the order in A (a), [A]a must be on x-axis. To be used by minimiser.
 		"""
 		
 		# This might need to change
@@ -138,7 +138,7 @@ class RPKA():
 	def sum_residuals_c(self, x):
 		
 		"""
-		Returns the sum of the residauls to find the order in C (c). To be used by the minimiser.
+		Returns the sum of the residauls to find the order in C (c), Rate[C]c must be on y-axis. To be used by the minimiser.
 		"""
 
 		# Residuals for finding c (order in C), y-axis is Rate/[C]c
@@ -151,19 +151,17 @@ class RPKA():
 		return sum_residuals
 		
 		
-	def diff_excess(self, min_meth = 'BFGS', lower_bound = -1, upper_bound = 1, initial_guess = 1):
+	def diff_excess(self, min_meth = 'TNC', lower_bound = 0, upper_bound = 1, initial_guess = 1):
     
 		"""
-		Perform a different excess analysis.
-
-		Reactions MUST be performed in this order:
+		Perform a different excess analysis. Reactions MUST be performed in this order:
 		Standard
 		Different [B]
 		Different [C] - where C is catalyst
 
 		Parameters
 		----------
-		method: Minimiser method: BFGS, CG, TNC, trust-constr
+		method: Minimiser method: TNC, trust-constr (use boundaries), BFGS, CG, (do not use boundaries)
 		lower_bound: lower bound for minimiser
 		upper_bound: upper bound for minimiser
 		initial_guess: initial guess for minimiser
@@ -295,9 +293,9 @@ class RPKA():
 			ax[var_row, 1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
 
 			# Set titles
-			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (overlay) : ' +
-									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (linearity)')
-			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (overlay)')
+			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
+									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (overlay)')
+			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (linearity)')
 
 			# Set labels
 			ax[var_row, 0].set_ylabel('Rate/[B]b')
@@ -305,6 +303,75 @@ class RPKA():
 
 			ax[var_row, 1].set_ylabel('Rate/[C]c')
 			ax[var_row, 1].set_xlabel('[A]')
+
+
+	def check_results_one_system(self, final_rpka_data):
+
+		"""
+		Shows the RPKA profiles for the auto-found orders as a visual check, for a singel system only.
+
+		Parameters
+		----------
+		final_rpka_data: Needs the output dataframe from rpka.diff_excess()
+		
+		Returns
+		-------
+		Plots of Rate/[B]b vs [A]a and Rate/[C]c vs [A] for each system
+
+		"""  
+		
+		# Create subplots
+		fig, ax = plt.subplots(1, 2, figsize = (15,5))
+
+		# Set the row, will be up to max number of systems
+		for var_row in range(0, self.number_of_systems.astype(int), 1):
+
+			# Cannot use choose_system as needs rpka_data dataframe as output from diff_excess()
+			# Create a list of the rows in which new systems start, to be use in iloc based slicing
+			starting_point = [var for var in range(0,len(final_rpka_data),(self.points_per_system) * self.reactions_per_system)]
+
+			# Which system are we finding? Determined by function parameter.
+			var = starting_point[var_row]
+
+			# Create dataframe of individual system, all relative to the starting point
+			tmp = final_rpka_data.iloc[var : var + self.points_per_system * self.reactions_per_system, :].reset_index(drop = True)
+
+			# Define what to plot
+			# Standard reaction - the first of the three systems
+			rxn_standard_Aa = tmp['[A]a'].iloc[0 : self.points_per_system]
+			rxn_standard_RateBb = tmp['Rate/[B]b'].iloc[0 : self.points_per_system]
+
+			rxn_standard_A = tmp['[A]'].iloc[0 : self.points_per_system]
+			rxn_standard_RateCc = tmp['Rate/[C]c'].iloc[0 : self.points_per_system]
+
+			# Change in [B] - the second of the three systems
+			rxn_diff_B_Aa = tmp['[A]a'].iloc[self.points_per_system : 2 * self.points_per_system]
+			rxn_diff_B_RateBb = tmp['Rate/[B]b'].iloc[self.points_per_system : 2 * self.points_per_system]
+
+			# Change in [C] - the third of the three systems
+			rxn_diff_C_A = tmp['[A]'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
+			rxn_diff_C_RateCc = tmp['Rate/[C]c'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
+
+			# Plot order in A and B - first column
+			ax[0].scatter(rxn_standard_Aa, rxn_standard_RateBb)
+			ax[0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb)
+
+			# Plot order in C - second column
+			ax[1].scatter(rxn_standard_A, rxn_standard_RateCc)
+			ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
+
+			# Set titles
+			ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
+									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (overlay)')
+			ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (linearity)')
+
+			# Set labels
+			ax[0].set_ylabel('Rate/[B]b')
+			ax[0].set_xlabel('[A]a')
+
+			ax[1].set_ylabel('Rate/[C]c')
+			ax[1].set_xlabel('[A]')
+
 			
 			
 	def manual(self, system_number, a, b, c):
@@ -353,8 +420,8 @@ class RPKA():
 		ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
 
 		# Set titles
-		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' (overlay) : ' + str(tmp['B'][0]) + ' ^ ' + str(b) + ' linearity')
-		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c) + ' (overlay)')
+		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' (linearity) : ' + str(tmp['B'][0]) + ' ^ ' + str(b) + ' (overlay)')
+		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c) + ' (linearity)')
 
 		# Set labels
 		ax[0].set_ylabel('Rate/[B]b')
