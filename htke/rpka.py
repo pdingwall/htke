@@ -134,7 +134,7 @@ class RPKA():
 		
 		return r2_to_min
 
-
+	
 	def sum_residuals_c(self, x):
 		
 		"""
@@ -149,7 +149,7 @@ class RPKA():
 		sum_residuals = np.sum(residuals ** 2)
 		
 		return sum_residuals
-		
+	
 		
 	def diff_excess(self, min_meth = 'TNC', lower_bound = 0, upper_bound = 1, initial_guess = 1):
     
@@ -295,7 +295,7 @@ class RPKA():
 			# Set titles
 			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
 									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (overlay)')
-			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (linearity)')
+			ax[var_row, 1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (overlay)')
 
 			# Set labels
 			ax[var_row, 0].set_ylabel('Rate/[B]b')
@@ -363,7 +363,7 @@ class RPKA():
 			# Set titles
 			ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
 									 str(tmp['B'][0]) + ' ^ ' + str(tmp['Order in B'][0]) + ' (overlay)')
-			ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (linearity)')
+			ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(tmp['Order in C'][0]) + ' (overlay)')
 
 			# Set labels
 			ax[0].set_ylabel('Rate/[B]b')
@@ -421,7 +421,7 @@ class RPKA():
 
 		# Set titles
 		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' (linearity) : ' + str(tmp['B'][0]) + ' ^ ' + str(b) + ' (overlay)')
-		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c) + ' (linearity)')
+		ax[1].set_title(str(tmp['C'][0]) + ' ^ ' + str(c) + ' (overlay)')
 
 		# Set labels
 		ax[0].set_ylabel('Rate/[B]b')
