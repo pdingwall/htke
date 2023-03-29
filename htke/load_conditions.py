@@ -229,8 +229,66 @@ class Conditions():
 
 		return experimental_data
 
+	def plot_corrections(experimental_data, points_per_reaction, reactions_per_system = 3):
+		
+		# Find the number of systems
+		number_of_systems = len(experimental_data) / (points_per_reaction * reactions_per_system)
+		
+		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (15,15))
+		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
-	def plot_corrections(experimental_data):
+		for var_row in range(0, int(number_of_systems), 1):
+
+			# Create a list of the rows in which new systems start, to be use in iloc based slicing
+			starting_point = [var for var in range(0, len(experimental_data), (points_per_reaction) * reactions_per_system)]
+
+			# Which system are we finding? Determined by function parameter.
+			var = starting_point[var_row]
+
+			# Create dataframe of individual system, all relative to the starting point
+			tmp = experimental_data.iloc[var : var + points_per_reaction * reactions_per_system, :].reset_index(drop = True)
+
+			# Plot first column - still includes t0 so slice must start at +1 for each row
+			ax[var_row, 0].scatter(tmp['SPKA'][1 : points_per_reaction], 
+								   tmp['Raw Peak Property'][1 : points_per_reaction], label = 'Uncorrected Raw Data')
+			ax[var_row, 0].scatter(tmp['SPKA'][1 : points_per_reaction], 
+								   tmp['Peak Property'][1 : points_per_reaction], label = 'Corrected Data')
+
+
+			# Plot second column
+			ax[var_row, 1].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
+								   tmp['Raw Peak Property'][points_per_reaction + 1 : 2 * points_per_reaction], label = 'Uncorrected Raw Data')
+			ax[var_row, 1].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
+								   tmp['Peak Property'][points_per_reaction + 1 : 2 * points_per_reaction], label = 'Corrected Data')
+
+			# Plot third column
+			ax[var_row, 2].scatter(tmp['SPKA'][2 * points_per_reaction + 1 : 3 * points_per_reaction], 
+								   tmp['Raw Peak Property'][2 * points_per_reaction + 1 : 3  * points_per_reaction], label = 'Uncorrected Raw Data')
+			ax[var_row, 2].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
+								   tmp['Peak Property'][2 * points_per_reaction + 1 : 3 * points_per_reaction], label = 'Corrected Data')
+
+			# Set Titles
+			ax[var_row, 0].set_title(str(tmp['Experiment'][0]))
+			ax[var_row, 1].set_title(str(tmp['Experiment'][points_per_reaction]))
+			ax[var_row, 2].set_title(str(tmp['Experiment'][2 * points_per_reaction]))
+
+			# Set labels
+			ax[var_row, 0].set_ylabel('Peak Property')
+			ax[var_row, 0].set_xlabel('SPKA Conversion')
+
+			ax[var_row, 1].set_ylabel('Peak Property')
+			ax[var_row, 1].set_xlabel('SPKA Conversion')
+
+			ax[var_row, 2].set_ylabel('Peak Property')
+			ax[var_row, 2].set_xlabel('SPKA Conversion')
+
+			# Add legends
+			ax[var_row, 0].legend()
+			ax[var_row, 1].legend()
+			ax[var_row, 2].legend()
+
+
+	def plot_corrections_old(experimental_data):
 		"""
 		Plots the raw vs corrected IR data points.
 		"""
@@ -247,5 +305,7 @@ class Conditions():
 			plt.scatter(tmp['SPKA'][1:], tmp['Raw Peak Property'][1:], label = 'Uncorrected Raw Data')
 			plt.scatter(tmp['SPKA'][1:], tmp['Peak Property'][1:], label = 'Corrected Data')
 			plt.title(label = str(var))
+			plt.xlabel('SPKA Conversion')
+			pt.ylabel('Peak Property')
 			plt.legend()
 			plt.show()
