@@ -260,7 +260,7 @@ class RPKA():
 
 			# Cannot use choose_system as needs rpka_data dataframe as output from diff_excess()
 			# Create a list of the rows in which new systems start, to be use in iloc based slicing
-			starting_point = [var for var in range(0,len(final_rpka_data),(self.points_per_system) * self.reactions_per_system)]
+			starting_point = [var for var in range(0, len(final_rpka_data), (self.points_per_system) * self.reactions_per_system)]
 
 			# Which system are we finding? Determined by function parameter.
 			var = starting_point[var_row]
@@ -284,13 +284,18 @@ class RPKA():
 			rxn_diff_C_A = tmp['[A]'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 			rxn_diff_C_RateCc = tmp['Rate/[C]c'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 
+			# Find the reaction names
+			rxn_standard_name = str('Standard: ' + tmp['Experiment'].iloc[0])
+			rxn_diff_B_name = str('Diff B: ' + tmp['Experiment'].iloc[self.points_per_system])
+			rxn_diff_C_name = str('Diff C: ' + tmp['Experiment'].iloc[2 * self.points_per_system])
+
 			# Plot order in A and B - first column
-			ax[var_row, 0].scatter(rxn_standard_Aa, rxn_standard_RateBb)
-			ax[var_row, 0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb)
+			ax[var_row, 0].scatter(rxn_standard_Aa, rxn_standard_RateBb, label = rxn_standard_name)
+			ax[var_row, 0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb, label = rxn_diff_B_name)
 
 			# Plot order in C - second column
-			ax[var_row, 1].scatter(rxn_standard_A, rxn_standard_RateCc)
-			ax[var_row, 1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
+			ax[var_row, 1].scatter(rxn_standard_A, rxn_standard_RateCc, label = rxn_standard_name)
+			ax[var_row, 1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc, label = rxn_diff_C_name)
 
 			# Set titles
 			ax[var_row, 0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
@@ -303,6 +308,10 @@ class RPKA():
 
 			ax[var_row, 1].set_ylabel('Rate/[C]c')
 			ax[var_row, 1].set_xlabel('[A]')
+			
+	        # Add legends
+			ax[var_row, 0].legend()
+			ax[var_row, 1].legend()
 
 
 	def check_results_one_system(self, final_rpka_data):
@@ -352,13 +361,18 @@ class RPKA():
 			rxn_diff_C_A = tmp['[A]'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 			rxn_diff_C_RateCc = tmp['Rate/[C]c'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 
+			# Find the reaction names
+			rxn_standard_name = str('Standard: ' + tmp['Experiment'].iloc[0])
+			rxn_diff_B_name = str('Diff B: ' + tmp['Experiment'].iloc[self.points_per_system])
+			rxn_diff_C_name = str('Diff C: ' + tmp['Experiment'].iloc[2 * self.points_per_system])
+
 			# Plot order in A and B - first column
-			ax[0].scatter(rxn_standard_Aa, rxn_standard_RateBb)
-			ax[0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb)
+			ax[0].scatter(rxn_standard_Aa, rxn_standard_RateBb, label = rxn_standard_name)
+			ax[0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb, label = rxn_diff_B_name)
 
 			# Plot order in C - second column
-			ax[1].scatter(rxn_standard_A, rxn_standard_RateCc)
-			ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
+			ax[1].scatter(rxn_standard_A, rxn_standard_RateCc, label = rxn_standard_name)
+			ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc, label = rxn_diff_C_name)
 
 			# Set titles
 			ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(tmp['Order in A'][0]) + ' (linearity) : ' +
@@ -371,6 +385,11 @@ class RPKA():
 
 			ax[1].set_ylabel('Rate/[C]c')
 			ax[1].set_xlabel('[A]')
+			
+	        # Add legends
+			ax[0].legend()
+			ax[1].legend()
+
 
 			
 			
@@ -408,16 +427,21 @@ class RPKA():
 		rxn_diff_C_A = tmp['[A]'].iloc[2 * self.points_per_system : 3 * self.points_per_system]
 		rxn_diff_C_RateCc = tmp['Rate'].iloc[2 * self.points_per_system : 3 * self.points_per_system] / tmp['[C]'].iloc[2 * self.points_per_system : 3 * self.points_per_system] ** c
 
+		# Find the reaction names
+		rxn_standard_name = str('Standard: ' + tmp['Experiment'].iloc[0])
+		rxn_diff_B_name = str('Diff B: ' + tmp['Experiment'].iloc[self.points_per_system])
+		rxn_diff_C_name = str('Diff C: ' + tmp['Experiment'].iloc[2 * self.points_per_system])
+
 		# Create subplots
 		fig, ax = plt.subplots(1, 2, figsize=(15,5))
 
 		# Plot order in A and B - first column
-		ax[0].scatter(rxn_standard_Aa, rxn_standard_RateBb)
-		ax[0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb)
+		ax[0].scatter(rxn_standard_Aa, rxn_standard_RateBb, label = rxn_standard_name)
+		ax[0].scatter(rxn_diff_B_Aa, rxn_diff_B_RateBb, label = rxn_diff_B_name)
 
 		# Plot order in C - second column
-		ax[1].scatter(rxn_standard_A, rxn_standard_RateCc)
-		ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc)
+		ax[1].scatter(rxn_standard_A, rxn_standard_RateCc, label = rxn_standard_name)
+		ax[1].scatter(rxn_diff_C_A, rxn_diff_C_RateCc, label = rxn_diff_C_name)
 
 		# Set titles
 		ax[0].set_title(str(tmp['A'][0]) + ' ^ ' + str(a) + ' (linearity) : ' + str(tmp['B'][0]) + ' ^ ' + str(b) + ' (overlay)')
@@ -429,3 +453,7 @@ class RPKA():
 
 		ax[1].set_ylabel('Rate/[C]c')
 		ax[1].set_xlabel('[A]')
+		
+		# Add legends
+		ax[0].legend()
+		ax[1].legend()
