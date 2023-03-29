@@ -7,7 +7,8 @@ from scipy.optimize import minimize
 
 class SPKA():
 
-	""" Create SPKA profiles.
+	""" 
+	Create SPKA profiles.
 	"""
 	def __init__(self, experimental_data):
 		self.experimental_data = experimental_data
@@ -18,7 +19,8 @@ class SPKA():
 		
 	def spka(self, sm_monitored):
 	
-		"""Create SPKA profiles. Must pass only a single peak from Peaks().
+		"""
+		Create SPKA profiles. Must pass only a single peak from Peaks().
 		
 		Parameter
 		---------
@@ -81,6 +83,7 @@ class SPKA():
 	
 	def spka_best_fit(self, spka_data):
 		"""
+		NOTE: This is depreciated in favour of Conditions.linear_correction()
 		Data smoothin function. Fits a line through the raw SPKA data then returns that line for further analysis in RPKA.
 		
 		Parameters
@@ -121,16 +124,77 @@ class SPKA():
 			df_new_A.append(pd.Series(best_fit_line_x))
 
 		spka_data['Raw Rate'] = pd.concat(df_old_rate, ignore_index = True)
-		spka_data['Raw [A]'] = pd.concat(df_old_A, ignore_index = True)
 		spka_data['Rate'] = pd.concat(df_new_rate, ignore_index = True)
+		spka_data['Raw [A]'] = pd.concat(df_old_A, ignore_index = True)
 		spka_data['[A]'] = pd.concat(df_new_A, ignore_index = True)
 
 		return spka_data
-	
+
+
+	def plot(self, spka_data, points_per_reaction, reactions_per_system = 3):
+		"""
+		Plot spka_data
+		
+		parameters
+		----------
+		spka_data: Dataframe output by spka()
+		points_per_reaction: points per reaction as determined earlier in sheet, include t0
+		reaction_per_system: default of three
+		
+		Return
+		------
+		An indiviudal plot for each reaction.
+		"""
+
+		# spka_data has the t0 removed so need to update the points_per_reaciton
+		updated_points_per_reaction = points_per_reaction.astype(int) - 1
+
+		# Find the number of systems
+		number_of_systems = len(spka_data) / (updated_points_per_reaction * reactions_per_system)
+
+		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (15,15))
+		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
+
+		for var_row in range(0, int(number_of_systems), 1):
+
+			# Create a list of the rows in which new systems start, to be use in iloc based slicing
+			starting_point = [var for var in range(0, len(spka_data), (updated_points_per_reaction) * reactions_per_system)]
+
+			# Which system are we finding? Determined by function parameter.
+			var = starting_point[var_row]
+
+			# Create dataframe of individual system, all relative to the starting point
+			tmp = spka_data.iloc[var : var + updated_points_per_reaction * reactions_per_system, :].reset_index(drop = True)
 			
-	def plot(self, spka_data):
+			# Plot first column
+			ax[var_row, 0].scatter(tmp['[A]'][0 : updated_points_per_reaction], 
+								   tmp['Rate'][0 : updated_points_per_reaction])
+
+			# Plot second column
+			ax[var_row, 1].scatter(tmp['[A]'][updated_points_per_reaction : 2 * updated_points_per_reaction], 
+								   tmp['Rate'][updated_points_per_reaction : 2 * updated_points_per_reaction])
+
+			# Plot third column
+			ax[var_row, 2].scatter(tmp['[A]'][2 * updated_points_per_reaction : 3 * updated_points_per_reaction], 
+								   tmp['Rate'][2 * updated_points_per_reaction : 3  * updated_points_per_reaction])
+
+			# Set Styles
+			for var2 in range(0, reactions_per_system):
+				# Set Titles
+				ax[var_row, var2].set_title(str(tmp['Experiment'][var2 * updated_points_per_reaction]))
+					
+				# Set labels
+				ax[var_row, var2].set_ylabel('Rate')
+				ax[var_row, var2].set_xlabel('[A]')
+
+				# Set ylim
+				ax[var_row, var2].set_ylim([0, float(tmp['Rate'].max()) * 1.1])
+
 	
-		""" Plot spka_data
+	def plot_old(self, spka_data):
+	
+		"""
+		Plot spka_data
 		
 		parameters
 		----------
@@ -152,8 +216,9 @@ class SPKA():
 			#  Find line of best fit => np.polyfit(x, y, 1)
 			a, b = np.polyfit(tmp['[A]'].astype(float), tmp['Rate'].astype(float), 1)
 			plt.plot(tmp['[A]'], a * tmp['[A]'] + b)
+
 			
-	def compare(self, sm_monitored,):
+	def compare(self, sm_monitored):
 	
 		"""
 		Compare SPKA profiles constructed using different peak properties.

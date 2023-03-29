@@ -258,7 +258,6 @@ class Conditions():
 			ax[var_row, 0].scatter(tmp['SPKA'][1 : points_per_reaction], 
 								   tmp['Peak Property'][1 : points_per_reaction], label = 'Corrected Data')
 
-
 			# Plot second column
 			ax[var_row, 1].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
 								   tmp['Raw Peak Property'][points_per_reaction + 1 : 2 * points_per_reaction], label = 'Uncorrected Raw Data')
@@ -271,25 +270,20 @@ class Conditions():
 			ax[var_row, 2].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
 								   tmp['Peak Property'][2 * points_per_reaction + 1 : 3 * points_per_reaction], label = 'Corrected Data')
 
-			# Set Titles
-			ax[var_row, 0].set_title(str(tmp['Experiment'][0]))
-			ax[var_row, 1].set_title(str(tmp['Experiment'][points_per_reaction]))
-			ax[var_row, 2].set_title(str(tmp['Experiment'][2 * points_per_reaction]))
+			# Set Styles
+			for var2 in range(0, reactions_per_system):
+				# Set Titles
+				ax[var_row, var2].set_title(str(tmp['Experiment'][var2 * points_per_reaction]))
+					
+				# Set labels
+				ax[var_row, var2].set_ylabel('Peak Property')
+				ax[var_row, var2].set_xlabel('SPKA Conversion')
+				
+				# Add legends
+				ax[var_row, var2].legend()				
 
-			# Set labels
-			ax[var_row, 0].set_ylabel('Peak Property')
-			ax[var_row, 0].set_xlabel('SPKA Conversion')
-
-			ax[var_row, 1].set_ylabel('Peak Property')
-			ax[var_row, 1].set_xlabel('SPKA Conversion')
-
-			ax[var_row, 2].set_ylabel('Peak Property')
-			ax[var_row, 2].set_xlabel('SPKA Conversion')
-
-			# Add legends
-			ax[var_row, 0].legend()
-			ax[var_row, 1].legend()
-			ax[var_row, 2].legend()
+				# Set ylim
+				ax[var_row, var2].set_ylim([0, float(tmp['Peak Property'].max()) * 1.05])
 
 
 	def plot_corrections_old(experimental_data):
