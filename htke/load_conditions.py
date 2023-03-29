@@ -231,6 +231,10 @@ class Conditions():
 
 	def plot_corrections(experimental_data, points_per_reaction, reactions_per_system = 3):
 		
+		"""
+		Plots the raw vs corrected IR data points.
+		"""
+		
 		# Find the number of systems
 		number_of_systems = len(experimental_data) / (points_per_reaction * reactions_per_system)
 		
@@ -290,7 +294,7 @@ class Conditions():
 
 	def plot_corrections_old(experimental_data):
 		"""
-		Plots the raw vs corrected IR data points.
+		Plots the raw vs corrected IR data points in a single column.
 		"""
 		
 		# Find unique reaction numbers
