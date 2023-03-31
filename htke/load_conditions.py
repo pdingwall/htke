@@ -145,6 +145,7 @@ class Conditions():
 	def linear_correction(experimental_data):
 		"""
 		Performs a linear correction by plotting Peak Property data vs SPKA Conversion. 
+		For any number of points per reaction.
 		
 		Parameters
 		----------
@@ -168,8 +169,18 @@ class Conditions():
 			x = tmp['SPKA'].astype(float)[1:]
 			y = tmp['Peak Property'][1:]
 
-			# Find linear fit
-			a,b = np.polyfit(x, y, 1)
+			# Add in the y-intercept
+			x[len(x) + 1] = 100
+			y[len(y) + 1] = 0
+			
+			# Define weights - Create an array equal to the length of tmp (ie points per reaction)
+			w = np.full(len(tmp), 1.0)
+
+			# Change the final element (for point (100, 0) to be very small)
+			w[-1] = 0.0000001
+
+			# Find linear fit - weighted so that theoretical point (100, 0) stays at (100, 0)
+			a,b = np.polyfit(x, y, 1, w = 1/w)
 
 			# Create the smoothed y data
 			best_fit_line = []
@@ -191,7 +202,138 @@ class Conditions():
 		experimental_data = pd.concat(df).reset_index(drop = True)
 		
 		return experimental_data
+		
+
+	def linear_correction_wlr(experimental_data):
+		"""
+		Performs a weighted linear regression correction by plotting Peak Property data vs SPKA Conversion.
+		For five points per reaction only.
+		Errors are defined from experiments GL-06-50 and GL-06-57.
+		
+		Parameters
+		----------
+		experimental_data =  dataframe output by conditions.read()
+		
+		Return
+		------
+		experimental_data = dataframe with 'Peak Property' reaplaced with smoothed line. Original data now in 'Raw Peak Property'.		
+		"""
+		
+		# Find unique reaction numbers
+		reaction_list = experimental_data['Experiment'].unique()
+		
+		df = []
+		for var in reaction_list:
 			
+			# Find a single experiment
+			tmp = experimental_data[experimental_data['Experiment'] == var].reset_index(drop = True)
+
+			# Define x and y - without the first point which is the t0
+			x = tmp['SPKA'].astype(float)[1:]
+			y = tmp['Peak Property'][1:]
+
+			# Add in the y-intercept
+			x[len(x) + 1] = 100
+			y[len(y) + 1] = 0
+			
+			# Define weights - Std Dev of each point determined from GL-06-57, fifth point must be (100, 0) so make std dev artifically tiny
+			w = np.array([0.081114, 0.074629, 0.037825, 0.032234, 0.0000001])
+
+			# Find linear fit - weights = 1/stddev
+			a,b = np.polyfit(x, y, 1, w = 1/w)
+
+			# Create the smoothed y data
+			best_fit_line = []
+			best_fit_line = a * x + b
+
+			# Find t0 point
+			t0 = pd.Series(experimental_data[experimental_data['Experiment'] == var]['Peak Property'].iloc[0])
+
+			# Add the t0 and first point back in
+			best_fit_line = pd.concat([t0, best_fit_line])
+
+			# Add to dataframe
+			tmp['Raw Peak Property'] = tmp['Peak Property']
+			tmp['Peak Property'] = best_fit_line
+
+			# Append to list
+			df.append(tmp)
+					
+		experimental_data = pd.concat(df).reset_index(drop = True)		
+		
+		return experimental_data
+		
+
+
+	def linear_correction_wlr_test(experimental_data):
+		"""
+		Performs a weighted linear regression correction by plotting Peak Property data vs SPKA Conversion.
+		Estiamtes the error at each point.
+		
+		Parameters
+		----------
+		experimental_data =  dataframe output by conditions.read()
+		
+		Return
+		------
+		experimental_data = dataframe with 'Peak Property' reaplaced with smoothed line. Original data now in 'Raw Peak Property'.		
+		"""
+		
+		# Find unique reaction numbers
+		reaction_list = experimental_data['Experiment'].unique()
+		
+		df = []
+		for var in reaction_list:
+			
+			# Find a single experiment
+			tmp = experimental_data[experimental_data['Experiment'] == var].reset_index(drop = True)
+
+			# Define x and y - without the first point which is the t0
+			x = tmp['SPKA'].astype(float)[1:]
+			y = tmp['Peak Property'][1:]
+
+
+			# Weighted least squares
+			# generate the augmented feature matrix (bias + feature)
+			X = np.c_[np.ones(x.shape[0]),x]
+
+			# solution of linear regression
+			w_lr = np.linalg.inv(X.T @ X) @ X.T @ y
+
+			# calculate residuals
+			res = y - X @ w_lr
+
+			# estimate the covariance matrix
+			C = np.diag(res**2)
+
+			# solution of weighted linear regression
+			w_wlr = np.linalg.inv(X.T @ np.linalg.inv(C) @ X) @ (X.T @ np.linalg.inv(C) @ y)
+
+
+			# Create the smoothed y data
+			best_fit_line = []
+			best_fit_line = w_wlr[1] * x + w_wlr[0]
+
+			# Find t0 point
+			t0 = pd.Series(experimental_data[experimental_data['Experiment'] == var]['Peak Property'].iloc[0])
+
+			# Add the t0 and first point back in
+			best_fit_line = pd.concat([t0, best_fit_line])
+
+			# Add to dataframe
+			tmp['Raw Peak Property'] = tmp['Peak Property']
+			tmp['Peak Property'] = best_fit_line
+
+			# Append to list
+			df.append(tmp)
+					
+		experimental_data = pd.concat(df).reset_index(drop = True)
+		
+		return experimental_data		
+
+
+
+		
 			
 	def t0_correction(experimental_data, no_reactions, points_per_reaction):
 		
