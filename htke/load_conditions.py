@@ -446,6 +446,6 @@ class Conditions():
 			plt.scatter(tmp['SPKA'][1:], tmp['Peak Property'][1:], label = 'Corrected Data')
 			plt.title(label = str(var))
 			plt.xlabel('SPKA Conversion')
-			pt.ylabel('Peak Property')
+			plt.ylabel('Peak Property')
 			plt.legend()
 			plt.show()
