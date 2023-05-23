@@ -6,8 +6,7 @@ from scipy.optimize import minimize
 
 class RPKA():
 
-	def __init__(self, spka_data, points_per_reaction, reactions_per_system = 3):
-		self.spka_data = spka_data
+	def __init__(self, spka_data, points_per_reaction, reactions_per_system = 3):		
 		"""
 		Create RPKA profile using the SPKA data
 		
@@ -17,6 +16,9 @@ class RPKA():
 		points_per_reaction: points per reaction
 		reactions_per_system: Number of different reactions per system, default is 3
 		"""
+		
+		self.spka_data = spka_data
+
 		
 		# Create new dataframe from rpka_data
 		rpka_data = self.spka_data.drop(columns=['Interval Size',
@@ -100,7 +102,7 @@ class RPKA():
 	def sum_residuals_b(self, x):
 		
 		"""
-		Returns the sum of the residauls to find the order in B (b), Rate/[B]b must be on y-axis. To be used by minimiser.
+		Returns the sum of the residuals to find the order in B (b), Rate/[B]b must be on y-axis. To be used by minimiser.
 		"""
 
 		# Residuals for finding b (order in B), y-axis is Rate/[B]b
@@ -151,7 +153,7 @@ class RPKA():
 		return sum_residuals
 	
 		
-	def diff_excess(self, min_meth = 'TNC', lower_bound = 0, upper_bound = 1, initial_guess = 1):
+	def diff_excess(self, min_meth = 'trust-constr', lower_bound = 0, upper_bound = 2, initial_guess = 2):
     
 		"""
 		Perform a different excess analysis. Reactions MUST be performed in this order:
@@ -161,7 +163,7 @@ class RPKA():
 
 		Parameters
 		----------
-		method: Minimiser method: TNC, trust-constr (use boundaries), BFGS, CG, (do not use boundaries)
+		method: Minimiser method: trust-constr, TNC (use boundaries), BFGS, CG, (do not use boundaries)
 		lower_bound: lower bound for minimiser
 		upper_bound: upper bound for minimiser
 		initial_guess: initial guess for minimiser
@@ -252,7 +254,7 @@ class RPKA():
 		"""  
 		
 		# Create subplots
-		fig, ax = plt.subplots(self.number_of_systems.astype(int), 2, figsize = (15,15))
+		fig, ax = plt.subplots(self.number_of_systems.astype(int), 2, figsize = (14,8))
 		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
 		# Set the row, will be up to max number of systems
@@ -330,7 +332,7 @@ class RPKA():
 		"""  
 		
 		# Create subplots
-		fig, ax = plt.subplots(1, 2, figsize = (15,5))
+		fig, ax = plt.subplots(1, 2, figsize = (14,8))
 
 		# Set the row, will be up to max number of systems
 		for var_row in range(0, self.number_of_systems.astype(int), 1):

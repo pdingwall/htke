@@ -152,7 +152,7 @@ class SPKA():
 		# Find the number of systems
 		number_of_systems = len(spka_data) / (updated_points_per_reaction * reactions_per_system)
 
-		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (15,15))
+		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (14,8))
 		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
 		for var_row in range(0, int(number_of_systems), 1):
@@ -187,8 +187,9 @@ class SPKA():
 				ax[var_row, var2].set_ylabel('Rate')
 				ax[var_row, var2].set_xlabel('[A]')
 
-				# Set ylim
+				# Set lims
 				ax[var_row, var2].set_ylim([0, float(tmp['Rate'].max()) * 1.1])
+				ax[var_row, var2].set_xlim([0, 0.1])
 
 	
 	def plot_old(self, spka_data):

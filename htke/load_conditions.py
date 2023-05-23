@@ -331,8 +331,6 @@ class Conditions():
 		
 		return experimental_data		
 
-
-
 		
 			
 	def t0_correction(experimental_data, no_reactions, points_per_reaction):
@@ -371,6 +369,7 @@ class Conditions():
 
 		return experimental_data
 
+
 	def plot_corrections(experimental_data, points_per_reaction, reactions_per_system = 3):
 		
 		"""
@@ -380,7 +379,7 @@ class Conditions():
 		# Find the number of systems
 		number_of_systems = len(experimental_data) / (points_per_reaction * reactions_per_system)
 		
-		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (15,15))
+		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (14,8))
 		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
 		for var_row in range(0, int(number_of_systems), 1):
