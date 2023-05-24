@@ -392,25 +392,34 @@ class Conditions():
 
 			# Create dataframe of individual system, all relative to the starting point
 			tmp = experimental_data.iloc[var : var + points_per_reaction * reactions_per_system, :].reset_index(drop = True)
+			
+			# Create t0 line to plot
+			tmp['t0'] = (100 - tmp['SPKA'].astype(float))/100 * tmp['Raw Peak Property'].iloc[0]
 
 			# Plot first column - still includes t0 so slice must start at +1 for each row
 			ax[var_row, 0].scatter(tmp['SPKA'][1 : points_per_reaction], 
 								   tmp['Raw Peak Property'][1 : points_per_reaction], label = 'Uncorrected Raw Data')
 			ax[var_row, 0].scatter(tmp['SPKA'][1 : points_per_reaction], 
 								   tmp['Peak Property'][1 : points_per_reaction], label = 'Corrected Data')
-
+			ax[var_row, 0].plot(tmp['SPKA'][1 : points_per_reaction],
+								   tmp['t0'][1 : points_per_reaction], label = 'Ideal t0', color = 'r')
+								   
 			# Plot second column
 			ax[var_row, 1].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
 								   tmp['Raw Peak Property'][points_per_reaction + 1 : 2 * points_per_reaction], label = 'Uncorrected Raw Data')
 			ax[var_row, 1].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
 								   tmp['Peak Property'][points_per_reaction + 1 : 2 * points_per_reaction], label = 'Corrected Data')
-
+			ax[var_row, 1].plot(tmp['SPKA'][1 : points_per_reaction],
+								   tmp['t0'][1 : points_per_reaction], label = 'Ideal t0', color = 'r')
+								   
 			# Plot third column
 			ax[var_row, 2].scatter(tmp['SPKA'][2 * points_per_reaction + 1 : 3 * points_per_reaction], 
 								   tmp['Raw Peak Property'][2 * points_per_reaction + 1 : 3  * points_per_reaction], label = 'Uncorrected Raw Data')
 			ax[var_row, 2].scatter(tmp['SPKA'][points_per_reaction + 1 : 2 * points_per_reaction], 
 								   tmp['Peak Property'][2 * points_per_reaction + 1 : 3 * points_per_reaction], label = 'Corrected Data')
-
+			ax[var_row, 2].plot(tmp['SPKA'][1 : points_per_reaction],
+								   tmp['t0'][1 : points_per_reaction], label = 'Ideal t0', color = 'r')
+								   
 			# Set Styles
 			for var2 in range(0, reactions_per_system):
 				# Set Titles
