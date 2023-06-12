@@ -204,7 +204,7 @@ class Conditions():
 		return experimental_data
 		
 
-	def linear_correction_wlr(experimental_data):
+	def linear_correction_wlr_area(experimental_data):
 		"""
 		Performs a weighted linear regression correction by plotting Peak Property data vs SPKA Conversion.
 		For five points per reaction only.
@@ -265,10 +265,12 @@ class Conditions():
 		
 
 
-	def linear_correction_wlr_test(experimental_data):
+
+	def linear_correction_wlr_prom(experimental_data):
 		"""
 		Performs a weighted linear regression correction by plotting Peak Property data vs SPKA Conversion.
-		Estiamtes the error at each point.
+		For five points per reaction only.
+		Errors are defined from experiments GL-06-50 and GL-06-57.
 		
 		Parameters
 		----------
@@ -292,27 +294,19 @@ class Conditions():
 			x = tmp['SPKA'].astype(float)[1:]
 			y = tmp['Peak Property'][1:]
 
+			# Add in the y-intercept
+			x[len(x) + 1] = 100
+			y[len(y) + 1] = 0
+			
+			# Define weights - Std Dev of each point determined from GL-06-57, fifth point must be (100, 0) so make std dev artifically tiny
+			w = np.array([0.010645, 0.009685, 0.006698, 0.003458, 0.0000001])
 
-			# Weighted least squares
-			# generate the augmented feature matrix (bias + feature)
-			X = np.c_[np.ones(x.shape[0]),x]
-
-			# solution of linear regression
-			w_lr = np.linalg.inv(X.T @ X) @ X.T @ y
-
-			# calculate residuals
-			res = y - X @ w_lr
-
-			# estimate the covariance matrix
-			C = np.diag(res**2)
-
-			# solution of weighted linear regression
-			w_wlr = np.linalg.inv(X.T @ np.linalg.inv(C) @ X) @ (X.T @ np.linalg.inv(C) @ y)
-
+			# Find linear fit - weights = 1/stddev
+			a,b = np.polyfit(x, y, 1, w = 1/w)
 
 			# Create the smoothed y data
 			best_fit_line = []
-			best_fit_line = w_wlr[1] * x + w_wlr[0]
+			best_fit_line = a * x + b
 
 			# Find t0 point
 			t0 = pd.Series(experimental_data[experimental_data['Experiment'] == var]['Peak Property'].iloc[0])
@@ -327,9 +321,12 @@ class Conditions():
 			# Append to list
 			df.append(tmp)
 					
-		experimental_data = pd.concat(df).reset_index(drop = True)
+		experimental_data = pd.concat(df).reset_index(drop = True)		
 		
-		return experimental_data		
+		return experimental_data
+
+
+
 
 		
 			
@@ -379,7 +376,7 @@ class Conditions():
 		# Find the number of systems
 		number_of_systems = len(experimental_data) / (points_per_reaction * reactions_per_system)
 		
-		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (14,8))
+		fig, ax = plt.subplots(int(number_of_systems), int(reactions_per_system), figsize = (14,14))
 		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
 		for var_row in range(0, int(number_of_systems), 1):
