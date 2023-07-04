@@ -367,6 +367,44 @@ class Conditions():
 		return experimental_data
 
 
+
+	def average_runs(experimental_data, points_per_reaction, reactions_per_run = 6):
+	
+		"""
+		Averages the peak property data between repeat reactions.
+		
+		Parameter
+		---------
+		points_per_reaction: points per reaction, including t0
+		reactions_per_run: number of systems studied per run, default is 6
+		
+		Returns
+		-------
+		experimental_data: Dataframe with original 'Peak Property' data replaced with averaged values
+		"""
+
+		# Determine the number of repeats
+		no_repeats = int(len(experimental_data) / (points_per_reaction * reactions_per_run))
+		 
+		# Find the index for 'Peak Property', in case it changes in the future
+		peak_property_index = [x for x, s in enumerate(experimental_data.columns) if 'Peak Property' in s]
+			
+		for spka_point in range(1, reactions_per_run * points_per_reaction):
+			# Find each reaction to average - Must start at 1 as 0 is the t0 and will treated separately
+			to_av = experimental_data[experimental_data.index % (points_per_reaction * reactions_per_run) == spka_point]['Peak Property']
+
+			# Find the average
+			average = to_av.mean()
+			
+			# Replace the raw data with the averaged data
+			for var in range (0, no_repeats):
+				experimental_data.iloc[to_av.index[var], peak_property_index] = average
+				
+		return experimental_data
+
+
+
+
 	def plot_corrections(experimental_data, points_per_reaction, reactions_per_system = 3):
 		
 		"""
