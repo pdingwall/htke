@@ -12,16 +12,7 @@ from scipy.optimize import minimize_scalar
 
 class Peaks():
 
-	"""Process raw IR data:
-	
-	prominence_all: Find the prominence of peaks of every wavelength in raw ir_data
-	prominence: Find the prominence of peaks of a single wavelength in raw ir_data
-	height: Find the height of peaks of a single wavelength in raw ir_data
-	exp_area: Find the areas of the peaks in the experimental data
-	fitted_area_sp: Examine a single peak and fit a Gaussian curve for a single wavelength
-	fitted_area: Find the areas of the fitted idealised Gaussian peaks
-	plot: Plot a single picked peaks against the raw data
-	"""
+	"""Class to process the IR data"""
 
 	
 	def __init__(self, ir_data):
@@ -33,7 +24,10 @@ class Peaks():
 		
 
 	def prominence_finder(self, var):
-	# Used by other function to automatically find the prominence threshold
+		
+		"""
+		Used by other functions to automatically find the prominence threshold
+		"""
 		
 		# Read "Conditions.xlsx"
 		quick_cond = pd.read_excel("Conditions.xlsx")
@@ -56,7 +50,8 @@ class Peaks():
 
 	def auto_prom(self, peak_of_interest, lower_bound = 0, upper_bound = 1):
 		
-		"""Find the prominence threshold. Requires "Conditions.xlsx" to exist.
+		"""
+		Find the prominence threshold. Requires "Conditions.xlsx" to exist.
 		
 		Parameter
 		---------
@@ -106,7 +101,8 @@ class Peaks():
 
 	def auto_height(self, peak_of_interest, lower_bound = 0, upper_bound = 1):
 		
-		"""Find the height threshold. Requires "Conditions.xlsx" to exist.
+		"""
+		Find the height threshold. Requires "Conditions.xlsx" to exist.
 		
 		Parameter
 		---------
@@ -124,7 +120,8 @@ class Peaks():
 		
 	def prominence_all(self, peak_threshold):
 	
-		"""Find the prominence of peaks of every wavelength in raw ir_data
+		"""
+		Find the prominence of peaks of every wavelength in raw ir_data
 		
 		Parameter
 		---------
@@ -171,7 +168,8 @@ class Peaks():
 
 	def prominence(self, peak_threshold, peak_of_interest):
 	
-		"""Find the prominence of peaks of a single wavelength in raw ir_data
+		"""
+		Find the prominence of peaks of a single wavelength in raw ir_data
 		
 		Parameter
 		---------
@@ -207,7 +205,8 @@ class Peaks():
 		
 	def height(self, peak_threshold, peak_of_interest):
 	
-		"""Find the height of peaks of a single wavelength in raw ir_data
+		"""
+		Find the height of peaks of a single wavelength in raw ir_data
 		
 		Parameter
 		---------
@@ -240,7 +239,8 @@ class Peaks():
 	
 	def exp_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0, time_adjust_after = 0):
 		
-		"""Find the areas of the peaks in the experimental data
+		"""
+		Find the areas of the peaks in the experimental data
 		
 		Parameter
 		---------
@@ -294,6 +294,7 @@ class Peaks():
 
 
 	def gaussian(self, x, a, b, c):
+	
 		"""
 		For use internally, defines a gaussian function to fit to experimental data.
 		"""
@@ -303,7 +304,8 @@ class Peaks():
 
 	def fitted_area(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0, time_adjust_after = 0, p0 = [5, -1.5, 2]):
 		
-		"""Find the areas of the fitted idealised Gaussian peaks
+		"""
+		Find the areas of the fitted idealised Gaussian peaks
 		
 		Parameter
 		---------
@@ -362,7 +364,8 @@ class Peaks():
 
 	def fitted_area_sp(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0, time_adjust_after = 0, picked_peak = 0, p0 = [5, -1.5, 2]):
 		
-		"""Examine a single peak and fit a Gaussian curve 
+		"""
+		Examine a single peak and fit a Gaussian curve 
 		
 		Parameter
 		---------
@@ -406,12 +409,14 @@ class Peaks():
 		plt.fill_between(x, self.gaussian(x, *pars), color='blue', alpha = 0.3) # fill the integrated area
 		plt.xlabel("Index (see above chart for corresponding time)")
 		plt.ylabel("Peak Area")
+		plt.title("Peak number " + str(picked_peak))
 		plt.show()		
 
 
 	def exp_area_sp(self, peak_threshold, residence_time, peak_of_interest, time_adjust_before = 0, time_adjust_after = 0, picked_peak = 0):
 
-		"""Examine a single peak and integrate it 
+		"""
+		Examine a single peak and integrate it 
 		
 		Parameter
 		---------
@@ -457,12 +462,11 @@ class Peaks():
 		plt.scatter(peak_pos.iloc[picked_peak], single_peak[single_peak['Relative Time'] == peak_pos.iloc[picked_peak]][peak_of_interest], color = 'red', s = 50)
 
 		# Fill integrated area
-		plt.fill_between(single_peak['Relative Time'], single_peak[peak_of_interest],    
-			#where = ((single_peak['Relative Time'] >= int_thresh_x[0]) & (single_peak['Relative Time'] <= int_thresh_x[1])),
-			color='blue', alpha = 0.3)
+		plt.fill_between(single_peak['Relative Time'], single_peak[peak_of_interest], color='blue', alpha = 0.3)
 
 		plt.xlabel("Time (min)")
 		plt.ylabel("Peak Area")
+		plt.title("Peak number " + str(picked_peak))
 		plt.show()
 
 
@@ -677,7 +681,9 @@ class Peaks():
 
 	def plot(self, processed_ir_data, peak_of_interest):
 	
-		"""Plot a single picked peaks against the raw data"""
+		"""
+		Plot a single picked peaks against the raw data
+		"""
 		
 		# What is the name of the peak
 		peak_list = [x for x in list(processed_ir_data) if 'Peak' in x]

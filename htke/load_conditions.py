@@ -19,6 +19,7 @@ class Conditions():
 	{C]0: Initial concentration of C
 	Initial Conv: SPKA conversion of initial point (ie 10, 20, 30)
 	SPKA: Number of SPKA reactions per profile (including t0)
+	Initial Conv: SPKA Conversion of initial point
 	Interval Size: SPKA interval size (ie 10%, 20% steps)
 	tR (min): Residence time (minutes)
 	"""
@@ -35,8 +36,8 @@ class Conditions():
 		
 		Return
 		------
-		exerimental_data: Dataframe containing exmperimental data sepcificed in "Conditions.xlsx" and processed_ir_data
-		Will also check that numbr of IR datapoints matches the number of specified conditions.
+		experimental_data: Dataframe containing exmperimental data sepcificed in "Conditions.xlsx" and processed_ir_data
+		Will also check that number of IR datapoints matches the number of specified conditions.
 		"""
 	
 		# Read excel sheet
@@ -262,8 +263,6 @@ class Conditions():
 		experimental_data = pd.concat(df).reset_index(drop = True)		
 		
 		return experimental_data
-		
-
 
 
 	def linear_correction_wlr_prom(experimental_data):
@@ -324,12 +323,8 @@ class Conditions():
 		experimental_data = pd.concat(df).reset_index(drop = True)		
 		
 		return experimental_data
-
-
-
-
-		
-			
+	
+	
 	def t0_correction(experimental_data, no_reactions, points_per_reaction):
 		
 		"""
@@ -343,7 +338,7 @@ class Conditions():
 		
 		Returns
 		--------
-		experimental_data: Dataframe with original t0 data replaced
+		experimental_data: Dataframe with original t0 data replaced with an average value
 		"""
 		
 		# Find unique reaction numbers
@@ -367,11 +362,10 @@ class Conditions():
 		return experimental_data
 
 
-
 	def average_runs(experimental_data, points_per_reaction, reactions_per_run = 6):
 	
 		"""
-		Averages the peak property data between repeat reactions.
+		Averages the peak property data between repeat reactions. Do not have to specify the number of repeats.
 		
 		Parameter
 		---------
@@ -401,8 +395,6 @@ class Conditions():
 				experimental_data.iloc[to_av.index[var], peak_property_index] = average
 				
 		return experimental_data
-
-
 
 
 	def plot_corrections(experimental_data, points_per_reaction, reactions_per_system = 3):
@@ -473,7 +465,7 @@ class Conditions():
 
 	def plot_corrections_old(experimental_data):
 		"""
-		Plots the raw vs corrected IR data points in a single column.
+		Plots the raw vs corrected IR data points in a single column. To be used for single substrate data.
 		"""
 		
 		# Find unique reaction numbers

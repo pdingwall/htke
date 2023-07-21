@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
 class RPKA():
+	
+	"""Class to perform RPKA"""
 
-	def __init__(self, spka_data, points_per_reaction, reactions_per_system = 3):		
+	def __init__(self, spka_data, points_per_reaction, reactions_per_system = 3):	
+	
 		"""
 		Create RPKA profile using the SPKA data
 		
@@ -72,6 +75,7 @@ class RPKA():
 		self.number_of_systems = len(rpka_data) / (self.points_per_system * self.reactions_per_system)
 		
 	def choose_system(self, system_number):
+	
 		"""
 		For internal use.
 		
@@ -81,7 +85,7 @@ class RPKA():
 		Parameters
 		----------
 		system_number: The system to return, in numerical order, from rpka_data
-		\
+		
 		Returns
 		-------
 		system: Dataframe of a single system
@@ -254,7 +258,7 @@ class RPKA():
 		"""  
 		
 		# Create subplots
-		fig, ax = plt.subplots(self.number_of_systems.astype(int), 2, figsize = (14,8))
+		fig, ax = plt.subplots(self.number_of_systems.astype(int), 2, figsize = (14,14))
 		fig.tight_layout(w_pad = 5, h_pad = 5) # Makes spacing better
 
 		# Set the row, will be up to max number of systems
@@ -391,9 +395,7 @@ class RPKA():
 	        # Add legends
 			ax[0].legend()
 			ax[1].legend()
-
-
-			
+		
 			
 	def manual(self, system_number, a, b, c):
 		

@@ -13,7 +13,7 @@ class Data:
         
         """
 		Will glob all txt files and return them in a dataframe.
-		This is specifically for IR data.
+		This is for ICIR 4 data.
 		"""
         
         globbed_files = glob.glob("*.txt")
@@ -45,7 +45,7 @@ class Data:
 	
         """
         Will glob all txt files and return them in a dataframe.
-        This is for the new format from ICIR 7.1		
+        This is for ICIR 7 files.
         """
 
         globbed_files = glob.glob("*.txt")
@@ -79,8 +79,7 @@ class Data:
 
         ir_data = pd.concat(frame, ignore_index=True) 
         
-        return ir_data
-		
+        return ir_data		
 		
         
     def plot(ir_data):
@@ -100,10 +99,9 @@ class Data:
 		lam: Affects resolution, lower is more detailed, higher is more general 
 		p: Affects resolution, higher is more detailed
 		niter: Affects depth, higher takes baseline into the peak (keep at 10 or below)
-        From: https://stackoverflow.com/questions/57350711/baseline-correction-for-spectroscopic-data
+        Code from: https://stackoverflow.com/questions/57350711/baseline-correction-for-spectroscopic-data
         """
-
-        #this is the code for the fitting procedure        
+   
         L = len(data)
         w = np.ones(L)
         D = sparse.diags([1,-2,1], [0,-1,-2], shape=(L,L-2))
